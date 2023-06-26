@@ -3,16 +3,19 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Transactions;
 
 namespace DiscordBot
 {
-	internal class Program
+	public class Program
 	{
-		static CommandService commandService;
-		static IServiceProvider serviceProvider;
-		static DiscordSocketClient client;
+		public const string PREFIX = "s!";
+
+		public static CommandService commandService;
+		public static IServiceProvider serviceProvider;
+		public static DiscordSocketClient client;
 
 		public static async Task Main()
 		{
@@ -27,7 +30,7 @@ namespace DiscordBot
 			});
 
 			client.Log += Log;
-			client.MessageReceived += OnMessageReceived;
+			client.MessageReceived += OnMessageReceivedAsync;
 
 			IServiceCollection servicies = new ServiceCollection()
 				.AddSingleton(client)
@@ -45,7 +48,7 @@ namespace DiscordBot
 			await Task.Delay(-1);
 		}
 
-		private static async Task OnMessageReceived(SocketMessage arg)
+		private static async Task OnMessageReceivedAsync(SocketMessage arg)
 		{
 			SocketUserMessage message = arg as SocketUserMessage;
 
@@ -53,7 +56,7 @@ namespace DiscordBot
 			{
 				int commandPosition = 0;
 
-				if (message.HasStringPrefix("gg", ref commandPosition))
+				if (message.HasStringPrefix(PREFIX, ref commandPosition))
 				{
 					SocketCommandContext commandContext = new SocketCommandContext(client, message);
 					IResult result = await commandService.ExecuteAsync(commandContext, commandPosition, serviceProvider);
