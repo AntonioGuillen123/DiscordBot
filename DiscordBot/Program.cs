@@ -12,6 +12,7 @@ namespace DiscordBot
 	public class Program
 	{
 		public const string PREFIX = "s!";
+		public const string TOKEN = "MTEyMTA3OTYxNjIxNjQ5ODIzNw.GEMsr3.F6C_iKq1tekAusXT6UVuHsj52-xZ5lIQyFlm9Y";
 
 		public static CommandService commandService;
 		public static IServiceProvider serviceProvider;
@@ -40,9 +41,7 @@ namespace DiscordBot
 
 			commandService.AddModulesAsync(Assembly.GetExecutingAssembly(), serviceProvider);
 
-			var token = "MTEyMTA3OTYxNjIxNjQ5ODIzNw.GCGK8O.D1Dr-BXascJxwUzTTG3-jtCZj9U1aHmg0eL-aY";
-
-			await client.LoginAsync(TokenType.Bot, token);
+			await client.LoginAsync(TokenType.Bot, TOKEN);
 			await client.StartAsync();
 
 			await Task.Delay(-1);

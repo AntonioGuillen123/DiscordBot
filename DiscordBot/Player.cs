@@ -12,6 +12,8 @@ namespace DiscordBot
 {
 	public class Player
 	{
+		private const int THUMBNAIL_RESOLUTION = 57600;
+
 		private IAudioClient _audioClient;
 		private IVoiceChannel _voiceChannel;
 		private ITextChannel _textChannel;
@@ -58,7 +60,7 @@ namespace DiscordBot
 
 		private async Task<string> FindVideoURLAsync(YoutubeClient youtube, IVideo video)
 		{
-			await _textChannel.SendMessageAsync($"Reproduciendo {video.Title}");
+			await SendMessagesToChannelAsync(video);
 
 			StreamManifest streamManifest = await youtube.Videos.Streams.GetManifestAsync(video.Id);
 
@@ -67,6 +69,32 @@ namespace DiscordBot
 				.GetWithHighestBitrate();
 
 			return streamInfo.Url;
+		}
+
+		private async Task SendMessagesToChannelAsync(IVideo video)
+		{
+			await _textChannel.SendMessageAsync($"Reproduciendo {video.Title}");
+
+			int position = ContainsThumbnail(video);
+
+			if (position != -1)
+				await _textChannel.SendMessageAsync(video.Thumbnails[position].Url);
+		}
+
+		private int ContainsThumbnail(IVideo video)
+		{
+			bool contains = false;
+			int count = video.Thumbnails.Count;
+			int position = -1;
+
+			for (int i = 0; !contains && i < count; i++)
+			{
+				if (video.Thumbnails[i].Resolution.Area == THUMBNAIL_RESOLUTION)
+					contains = true;
+					position = i;
+			}
+
+			return position;
 		}
 
 		public async void Stop() => await _voiceChannel.DisconnectAsync();
