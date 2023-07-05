@@ -1,20 +1,18 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using YoutubeExplode.Common;
 
 namespace DiscordBot
 {
 	public class Commands : ModuleBase<SocketCommandContext>
 	{
+
+
 		private Player _player;
 
-		public Commands(Player player) 
-		{ 
+		public Commands(Player player)
+		{
 			_player = player;
 		}
 
@@ -46,19 +44,68 @@ namespace DiscordBot
 			//}
 		}
 
-		[Command("play", RunMode = RunMode.Async)]
-		public async Task PlayAsync([Remainder]string query)
+		[Command("love", RunMode = RunMode.Async)]
+		public async Task LoveCalcCommand([Remainder] string input)
 		{
-			IVoiceChannel voiceChannel = (Context.User as IGuildUser).VoiceChannel;
-			ITextChannel textChannel = Context.Channel as ITextChannel; 
+			ITextChannel textChannel = Context.Channel as ITextChannel;
+			var mentionedUsers = Context.Message.MentionedUsers;
 
-			if (voiceChannel != null)
+			LoveCalc.StartLoveCalc(mentionedUsers, textChannel);
+		}
+
+		[Command("clear", RunMode = RunMode.Async)]
+		public async Task Clear(string input)
+		{
+			IGuildUser user = Context.User as IGuildUser;
+
+			if (user.GuildPermissions.ManageMessages)
 			{
-				_player.Play(voiceChannel, textChannel, query);
+				int value;
+
+				if (int.TryParse(input, out value))
+				{
+					ITextChannel channel = Context.Channel as ITextChannel;
+
+					var messages = await channel.GetMessagesAsync(++value).FlattenAsync();
+					bool first = true;
+
+					foreach (IMessage message in messages)
+					{
+						if (!first)
+						{
+							await message.DeleteAsync();
+						}
+						else
+						{
+							first = false;
+						}
+					}
+				}
+				else
+				{
+					await ReplyAsync("YOU MUST ENTER A NUMBER GREATER THAN 0");
+				}
 			}
 			else
 			{
-				await ReplyAsync($"No estas en nigún canal de voz");
+				await ReplyAsync("YOU DON'T HAVE PERMISSION TO DO THAT :(");
+			}
+
+		}
+
+		[Command("play", RunMode = RunMode.Async)]
+		public async Task PlayAsync([Remainder] string input)
+		{
+			IVoiceChannel voiceChannel = (Context.User as IGuildUser).VoiceChannel;
+			ITextChannel textChannel = Context.Channel as ITextChannel;
+
+			if (voiceChannel != null)
+			{
+				_player.StartPlayer(voiceChannel, textChannel, input);
+			}
+			else
+			{
+				await ReplyAsync($"YOU ARE NOT ON ANY VOICE CHANNEL :(");
 			}
 		}
 
@@ -77,7 +124,7 @@ namespace DiscordBot
 
 			for (int i = 0; i < 999; i++)
 			{
-				await user.SendMessageAsync("te amo");
+				await user.SendMessageAsync("ffffffffffff");
 			}
 		}
 	}

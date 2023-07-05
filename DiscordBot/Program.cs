@@ -12,14 +12,16 @@ namespace DiscordBot
 	public class Program
 	{
 		public const string PREFIX = "s!";
-		public const string TOKEN = "MTEyMTA3OTYxNjIxNjQ5ODIzNw.GEMsr3.F6C_iKq1tekAusXT6UVuHsj52-xZ5lIQyFlm9Y";
 
+		public static string token;
 		public static CommandService commandService;
 		public static IServiceProvider serviceProvider;
 		public static DiscordSocketClient client;
 
 		public static async Task Main()
 		{
+			GetToken();
+
 			commandService = new CommandService(new CommandServiceConfig
 			{
 				CaseSensitiveCommands = false
@@ -41,7 +43,7 @@ namespace DiscordBot
 
 			commandService.AddModulesAsync(Assembly.GetExecutingAssembly(), serviceProvider);
 
-			await client.LoginAsync(TokenType.Bot, TOKEN);
+			await client.LoginAsync(TokenType.Bot, token);
 			await client.StartAsync();
 
 			await Task.Delay(-1);
@@ -72,7 +74,6 @@ namespace DiscordBot
 					}
 				}
 			}
-			
 		}
 
 		private static Task Log(LogMessage msg)
@@ -80,5 +81,6 @@ namespace DiscordBot
 			Console.WriteLine(msg.ToString());
 			return Task.CompletedTask;
 		}
+		private static void GetToken() => token = File.ReadAllText("tokenfile.txt");
 	}
 }
