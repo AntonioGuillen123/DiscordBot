@@ -66,8 +66,8 @@ namespace DiscordBot
 					{
 						string error = result.Error switch
 						{
-							CommandError.UnknownCommand => "No conozco ese comando",
-							_ => "Otro error"
+							CommandError.UnknownCommand => "I DOESN´T KNOW THIS COMMAND",
+							_ => "OTHER ERROR"
 						};
 
 						await commandContext.Channel.SendMessageAsync(error);

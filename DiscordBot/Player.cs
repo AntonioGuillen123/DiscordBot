@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Audio;
+using Discord.WebSocket;
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -14,9 +15,9 @@ namespace DiscordBot
 	{
 		private const int THUMBNAIL_RESOLUTION = 57600;
 		private const string PATTERN_YT = "^(https?:\\/\\/)?(www\\.)?(youtube\\.com|youtu\\.be)\\/.+";
-		//private const string PATTERN_PLAYLIST = "^(https?://)?(www\\.)?(youtube\\.com|youtu\\.be)/playlist\\?list=([a-zA-Z0-9_-]+)$";
 		private const string PATTERN_PLAYLIST = "^(?:https?:\\/\\/)?(?:www\\.)?(?:youtube\\.com|youtu\\.be)\\/(?:playlist|watch)\\?(?=.*list=)(?:\\S+)?$";
 
+		private DiscordSocketClient _client = Program.client;
 		private IAudioClient _audioClient;
 		private IVoiceChannel _voiceChannel;
 		private ITextChannel _textChannel;
@@ -25,15 +26,18 @@ namespace DiscordBot
 		private YoutubeClient _youtube = new();
 		private bool _playing = false;
 
+
 		public async void StartPlayer(IVoiceChannel voiceChannel, ITextChannel textChannel, string query)
 		{
 			_voiceChannel = voiceChannel;
 			_textChannel = textChannel;
 
+			//Program.client.UserVoiceStateUpdated += ErrorDis;
+
 			bool isPlaylist = Regex.IsMatch(query, PATTERN_PLAYLIST);
 			List<IVideo> videos = new();
 			string text = "";
-
+				
 			if (isPlaylist)
 			{
 				foreach (IVideo video in await _youtube.Playlists.GetVideosAsync(query))
@@ -50,12 +54,10 @@ namespace DiscordBot
 				text = "VIDEO WAS SUCCESSFULLY ADDED TO QUEUE :)";
 			}
 
-			if (_queque.Count != 0)
+			videos.ForEach(_queque.Enqueue);
+
+			if (_playing)
 				await _textChannel.SendMessageAsync(text);
-
-			//await _textChannel.SendMessageAsync(videos.Count.ToString());
-
-			videos.ForEach(async video => /*await _textChannel.SendMessageAsync(video.Title)*/ _queque.Enqueue(video));
 
 			CheckQueue();
 		}
@@ -74,20 +76,26 @@ namespace DiscordBot
 
 		public async void Play(IVideo video)
 		{
-			_audioClient = null;
-			_audioClient = await _voiceChannel.ConnectAsync();
+			if (_audioClient == null)
+				_audioClient = await _voiceChannel.ConnectAsync();
 
-			string videoUrl = await FindVideoURLAsync(video);
+			Stream videoStream = await FindVideoURLAsync(video);
 
-			using Process ffmpeg = CreateStream(videoUrl);
-
-			//videoUrl.CopyTo(ffmpeg.StandardInput.BaseStream);
+			using Process ffmpeg = CreateStream();
 
 			using Stream output = ffmpeg.StandardOutput.BaseStream;
 			using AudioOutStream discord = _audioClient.CreatePCMStream(AudioApplication.Music);
 
 			try
 			{
+				Task.Run(async () =>
+				{
+					videoStream.Position = 0;
+					await videoStream.CopyToAsync(ffmpeg.StandardInput.BaseStream);
+					await ffmpeg.StandardInput.BaseStream.FlushAsync();
+					ffmpeg.StandardInput.BaseStream.Close();
+				});
+
 				await output.CopyToAsync(discord);
 			}
 			finally
@@ -97,17 +105,27 @@ namespace DiscordBot
 			}
 		}
 
-		private Process CreateStream(string path) => Process.Start(new ProcessStartInfo
+		//private async Task ErrorDis(SocketUser user, SocketVoiceState oldChannel, SocketVoiceState newChannel)
+		//{
+		//	await _textChannel.SendMessageAsync("movio");
+
+		//	if (user.Id == _client.CurrentUser.Id && oldChannel)
+		//	{
+				
+		//	}
+		//}
+
+		private Process CreateStream() => Process.Start(new ProcessStartInfo
 		{//-loglevel panic
 		 //-ac 2 -f s16le -ar 48000 pipe:1
 			FileName = "ffmpeg",
-			Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:",
+			Arguments = $"-hide_banner -i - -ac 2 -f s16le -ar 48000 pipe:",
 			UseShellExecute = false,
 			RedirectStandardInput = true,
 			RedirectStandardOutput = true,
 		});
 
-		private async Task<string> FindVideoURLAsync(IVideo video)
+		private async Task<Stream> FindVideoURLAsync(IVideo video)
 		{
 			await SendMessagesToChannelAsync(video);
 
@@ -117,9 +135,9 @@ namespace DiscordBot
 				.Where(v => v.Container == Container.Mp4)
 				.GetWithHighestBitrate();
 
-			//Stream stream = await _youtube.Videos.Streams.GetAsync(streamInfo);
+			Stream stream = await _youtube.Videos.Streams.GetAsync(streamInfo);
 
-			return streamInfo.Url;
+			return stream;
 		}
 
 		private async Task SendMessagesToChannelAsync(IVideo video)

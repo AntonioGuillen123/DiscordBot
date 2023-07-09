@@ -44,13 +44,28 @@ namespace DiscordBot
 			//}
 		}
 
+		[Command("github", RunMode = RunMode.Async)]
+		public async Task GitHubCommand(string input)
+		{
+			ITextChannel textChannel = Context.Channel as ITextChannel;
+
+			await Github.StartGithub(textChannel, input);
+		}
+
 		[Command("love", RunMode = RunMode.Async)]
-		public async Task LoveCalcCommand([Remainder] string input)
+		public async Task Love([Remainder] string input)
 		{
 			ITextChannel textChannel = Context.Channel as ITextChannel;
 			var mentionedUsers = Context.Message.MentionedUsers;
 
-			LoveCalc.StartLoveCalc(mentionedUsers, textChannel);
+			if (mentionedUsers.Count == 2)
+			{
+				LoveCalc.StartLoveCalc(mentionedUsers, textChannel);
+			}
+			else
+			{
+				await ReplyAsync("YOU MUST ENTER 2 USERS");
+			}
 		}
 
 		[Command("clear", RunMode = RunMode.Async)]
@@ -67,19 +82,11 @@ namespace DiscordBot
 					ITextChannel channel = Context.Channel as ITextChannel;
 
 					var messages = await channel.GetMessagesAsync(++value).FlattenAsync();
-					bool first = true;
 
 					foreach (IMessage message in messages)
-					{
-						if (!first)
-						{
 							await message.DeleteAsync();
-						}
-						else
-						{
-							first = false;
-						}
-					}
+
+					await ReplyAsync($" MESSAGES DELETED: {value} :)");
 				}
 				else
 				{
@@ -115,17 +122,17 @@ namespace DiscordBot
 		[Command("troll", RunMode = RunMode.Async)]
 		public async Task TrollAsync()
 		{
-			var client = new DiscordSocketClient(new DiscordSocketConfig
-			{
-				GatewayIntents = GatewayIntents.All
-			});
+			//var client = new DiscordSocketClient(new DiscordSocketConfig
+			//{
+			//	GatewayIntents = GatewayIntents.All
+			//});
 
-			SocketUser user = client.GetUser(414395803973713940);
+			//SocketUser user = client.GetUser(414395803973713940);
 
-			for (int i = 0; i < 999; i++)
-			{
-				await user.SendMessageAsync("ffffffffffff");
-			}
+			//for (int i = 0; i < 999; i++)
+			//{
+			//	await Utilities.ConteSendMessageWithColor("ffffffffffff", Color.Red);
+			//}
 		}
 	}
 }

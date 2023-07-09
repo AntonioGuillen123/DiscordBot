@@ -33,8 +33,6 @@ namespace DiscordBot
 			await textChannel.SendMessageAsync($"***{users[0].DisplayName}*** + ***{users[1].DisplayName}*** = {result}% UWU");
 
 			await textChannel.SendFileAsync(photo, "photo.png");
-
-			//await ReplyAsync($"***{users[0].DisplayName}*** + ***{users[1].DisplayName}*** = {result}% UWU");
 		}
 
 		private static async Task<Stream> MakePhoto(List<IGuildUser> users)
@@ -49,11 +47,13 @@ namespace DiscordBot
 
 			using System.Drawing.Image image1 = System.Drawing.Image.FromStream(photos[0]);
 			using System.Drawing.Image image2 = System.Drawing.Image.FromStream(photos[1]);
+			using System.Drawing.Image imagePlus = System.Drawing.Image.FromFile("spiderplus.png");
 
 			using (Graphics graphics = Graphics.FromImage(bitmap))
 			{
 				graphics.DrawImage(image1, 0, 0, RESOLUTION, RESOLUTION);
-				graphics.DrawImage(image2, RESOLUTION, 0, RESOLUTION, RESOLUTION);
+				graphics.DrawImage(imagePlus, RESOLUTION, 0, RESOLUTION, RESOLUTION);
+				graphics.DrawImage(image2, RESOLUTION * 2, 0, RESOLUTION, RESOLUTION);
 			};
 
 			Stream result = new MemoryStream();

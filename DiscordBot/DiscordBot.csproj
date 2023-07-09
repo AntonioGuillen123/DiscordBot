@@ -24,14 +24,4 @@
 	</None>
 </ItemGroup>
 
-
-<ItemGroup>
-  <None Update="result.png">
-    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-  </None>
-  <None Update="tokenfile.txt">
-    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-  </None>
-</ItemGroup>
-
 </Project>
