@@ -2,7 +2,6 @@
 using Discord.Audio;
 using Discord.WebSocket;
 using System.Diagnostics;
-using System.IO;
 using System.Text.RegularExpressions;
 using YoutubeExplode;
 using YoutubeExplode.Common;
@@ -17,14 +16,16 @@ namespace DiscordBot
 		private const string PATTERN_YT = "^(https?:\\/\\/)?(www\\.)?(youtube\\.com|youtu\\.be)\\/.+";
 		private const string PATTERN_PLAYLIST = "^(?:https?:\\/\\/)?(?:www\\.)?(?:youtube\\.com|youtu\\.be)\\/(?:playlist|watch)\\?(?=.*list=)(?:\\S+)?$";
 
-		private DiscordSocketClient _client = Program.client;
 		private IAudioClient _audioClient;
 		private IVoiceChannel _voiceChannel;
 		private ITextChannel _textChannel;
 
 		private Queue<IVideo> _queque = new();
 		private YoutubeClient _youtube = new();
-		private bool _playing = false;
+
+		private bool _doQueque;
+		private bool _playing;
+		private CancellationTokenSource _token;
 
 
 		public async void StartPlayer(IVoiceChannel voiceChannel, ITextChannel textChannel, string query)
@@ -34,36 +35,47 @@ namespace DiscordBot
 
 			//Program.client.UserVoiceStateUpdated += ErrorDis;
 
-			bool isPlaylist = Regex.IsMatch(query, PATTERN_PLAYLIST);
-			List<IVideo> videos = new();
-			string text = "";
-				
-			if (isPlaylist)
+			try
 			{
-				foreach (IVideo video in await _youtube.Playlists.GetVideosAsync(query))
-					videos.Add(video);
+				bool isPlaylist = Regex.IsMatch(query, PATTERN_PLAYLIST);
+				List<IVideo> videos = new();
+				string text = "";
 
-				text = "PLAYLIST WAS SUCCESSFULLY ADDED TO QUEUE :)";
+				if (isPlaylist)
+				{
+					foreach (IVideo video in await _youtube.Playlists.GetVideosAsync(query))
+						videos.Add(video);
+
+					text = "PLAYLIST WAS SUCCESSFULLY ADDED TO QUEUE :)";
+				}
+				else
+				{
+					bool isYT = Regex.IsMatch(query, PATTERN_YT);
+
+					videos.Add(isYT ? await _youtube.Videos.GetAsync(query) : await _youtube.Search.GetVideosAsync(query).FirstOrDefaultAsync());
+
+					text = "VIDEO WAS SUCCESSFULLY ADDED TO QUEUE :)";
+				}
+
+				videos.ForEach(_queque.Enqueue);
+
+				if (_playing)
+					await _textChannel.SendMessageAsync(text);
+
+				_doQueque = false;
+
+				CheckQueue();
 			}
-			else
+			catch (Exception)
 			{
-				bool isYT = Regex.IsMatch(query, PATTERN_YT);
-
-				videos.Add(isYT ? await _youtube.Videos.GetAsync(query) : await _youtube.Search.GetVideosAsync(query).FirstOrDefaultAsync());
-
-				text = "VIDEO WAS SUCCESSFULLY ADDED TO QUEUE :)";
+				await _textChannel.SendMessageAsync("AN ERROR HAS OCCURRED WITH THE VIDEO :(");
 			}
-
-			videos.ForEach(_queque.Enqueue);
-
-			if (_playing)
-				await _textChannel.SendMessageAsync(text);
-
-			CheckQueue();
 		}
 
 		public async void CheckQueue()
 		{
+			_doQueque = true;
+
 			do
 			{
 				if (!_playing)
@@ -71,7 +83,7 @@ namespace DiscordBot
 					_playing = true;
 					Play(_queque.Dequeue());
 				}
-			} while (_queque.Count != 0);
+			} while (_doQueque && _queque.Count != 0);
 		}
 
 		public async void Play(IVideo video)
@@ -88,6 +100,8 @@ namespace DiscordBot
 
 			try
 			{
+				_token = new CancellationTokenSource();
+
 				Task.Run(async () =>
 				{
 					videoStream.Position = 0;
@@ -96,12 +110,55 @@ namespace DiscordBot
 					ffmpeg.StandardInput.BaseStream.Close();
 				});
 
-				await output.CopyToAsync(discord);
+				await output.CopyToAsync(discord, _token.Token);
+			}
+			catch (Exception)
+			{
+
 			}
 			finally
 			{
 				await discord.FlushAsync();
 				_playing = false;
+			}
+		}
+
+		//public void PausePlayback()
+		//{
+		//	if (_playing && !_paused)
+		//	{
+		//		_token.Cancel();
+		//		_paused = true;
+		//	}
+		//}
+
+		//public void ResumePlayback()
+		//{
+		//	if (_playing && _paused)
+		//	{
+		//		_token = new CancellationTokenSource();
+		//		_paused = false;
+
+		//		Play();
+		//	}
+		//}
+
+		//private async void Cancellation()
+		//{
+		//	_token?.Cancel();
+		//}
+
+		public async void Skip()
+		{
+			if (_playing && _queque.Count != 0)
+			{
+				await _textChannel.SendMessageAsync("SONG SKIPED SUCCESSFULLY");
+
+				_token?.Cancel();
+			}
+			else
+			{
+				await _textChannel.SendMessageAsync("NO SONGS IN THE QUEUE");
 			}
 		}
 
@@ -111,7 +168,7 @@ namespace DiscordBot
 
 		//	if (user.Id == _client.CurrentUser.Id && oldChannel)
 		//	{
-				
+
 		//	}
 		//}
 
@@ -168,6 +225,31 @@ namespace DiscordBot
 			return position;
 		}
 
-		public async void Stop() => await _voiceChannel.DisconnectAsync();
+		public async void SeeQueque()
+		{
+			string text = "";
+			int count = _queque.Count;
+
+			text = count == 0 ? "NO SONGS IN THE QUEUE" : $"THERE ARE {count} SONGS IN QUEUE";
+
+			await _textChannel.SendMessageAsync(text);
+		}
+		public async void Stop()
+		{
+			await _voiceChannel.DisconnectAsync();
+
+			ResetPlayer();
+		}
+
+		private void ResetPlayer()
+		{
+			_audioClient = null;
+			_queque = new();
+			_youtube = new();
+			_doQueque = false;
+			_playing = false;
+			_token?.Cancel();
+			_token = null;
+		}
 	}
 }

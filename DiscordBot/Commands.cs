@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using YoutubeExplode.Common;
 
 namespace DiscordBot
@@ -84,7 +83,7 @@ namespace DiscordBot
 					var messages = await channel.GetMessagesAsync(++value).FlattenAsync();
 
 					foreach (IMessage message in messages)
-							await message.DeleteAsync();
+						await message.DeleteAsync();
 
 					await ReplyAsync($" MESSAGES DELETED: {value} :)");
 				}
@@ -97,7 +96,6 @@ namespace DiscordBot
 			{
 				await ReplyAsync("YOU DON'T HAVE PERMISSION TO DO THAT :(");
 			}
-
 		}
 
 		[Command("play", RunMode = RunMode.Async)]
@@ -116,8 +114,17 @@ namespace DiscordBot
 			}
 		}
 
+		[Command("skip", RunMode = RunMode.Async)]
+		public async Task SkipAsync() => _player.Skip();
+
+		[Command("queque", RunMode = RunMode.Async)]
+		public async Task Queque() => _player.SeeQueque();
+
 		[Command("stop", RunMode = RunMode.Async)]
-		public async Task StopAsync() => _player.Stop();
+		public async Task StopAsync()
+		{
+			_player.Stop();
+		}
 
 		[Command("troll", RunMode = RunMode.Async)]
 		public async Task TrollAsync()
