@@ -1,17 +1,19 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using DiscordBot.Models;
+using DiscordBot.Models.Amazon;
+using DiscordBot.Models.DatabaseFolder;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Net.NetworkInformation;
 using System.Reflection;
-using System.Transactions;
 
 namespace DiscordBot
 {
 	public class Program
 	{
-		public const string PREFIX = "s!";
+		public const string PREFIX = "/";
+		//public const string PREFIX = "s!";
 
 		public static string token;
 		public static CommandService commandService;
@@ -32,12 +34,14 @@ namespace DiscordBot
 				GatewayIntents = GatewayIntents.All
 			});
 
-			client.Log += Log;
+			client.Log += LogAsync;
 			client.MessageReceived += OnMessageReceivedAsync;
+			client.Ready += Database.InsertUsersAsync;
 
 			IServiceCollection servicies = new ServiceCollection()
 				.AddSingleton(client)
-				.AddSingleton<Player>();
+				.AddSingleton<Player>()
+				.AddSingleton<Weather>();
 
 			serviceProvider = servicies.BuildServiceProvider();
 
@@ -48,13 +52,14 @@ namespace DiscordBot
 
 			await Task.Delay(-1);
 		}
-
 		private static async Task OnMessageReceivedAsync(SocketMessage arg)
 		{
 			SocketUserMessage message = arg as SocketUserMessage;
 
 			if (message != null)
 			{
+				await Database.MessageXPAdd(message);
+
 				int commandPosition = 0;
 
 				if (message.HasStringPrefix(PREFIX, ref commandPosition))
@@ -76,7 +81,7 @@ namespace DiscordBot
 			}
 		}
 
-		private static Task Log(LogMessage msg)
+		private static Task LogAsync(LogMessage msg)
 		{
 			Console.WriteLine(msg.ToString());
 			return Task.CompletedTask;

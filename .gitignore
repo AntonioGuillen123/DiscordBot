@@ -3,8 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
-# Text Token File
+# Token Files
 tokenfile.txt
+weathertokenfile.txt
 
 # User-specific files
 *.rsuser

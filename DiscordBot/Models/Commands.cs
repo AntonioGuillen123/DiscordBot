@@ -1,58 +1,38 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
+using DiscordBot.Models.Amazon;
+using DiscordBot.Models.DatabaseFolder;
 using YoutubeExplode.Common;
 
-namespace DiscordBot
+namespace DiscordBot.Models
 {
 	public class Commands : ModuleBase<SocketCommandContext>
 	{
-
-
 		private Player _player;
+		private Weather _weather;
+		private DiscordSocketClient _client = Program.client;
 
-		public Commands(Player player)
+		public Commands(Player player, Weather weather)
 		{
 			_player = player;
+			_weather = weather;
 		}
 
-		//[Command("help", RunMode = RunMode.Async)]
-		//public async Task HelpAsync()
-		//{
-		//	await ReplyAsync($"Hola {Context.Message.Author}");
-		//}
-
-		[Command("info", RunMode = RunMode.Async)]
-		public async Task InfoAsync()
-		{
-			await ReplyAsync($"Hola {Context.User}");
-			await ReplyAsync($"Estamos en {Context.Guild.Name}");
-
-			var channels = Context.Guild.VoiceChannels;
-
-			foreach (var channel in channels)
-			{
-				if (channel.Name != "general")
-				{
-					await channel.DeleteAsync();
-				}
-			}
-
-			//for (int i = 0; i < 100; i++)
-			//{
-			//	await Context.Guild.CreateVoiceChannelAsync($"Troleo Hermano {i + 1}");
-			//}
-		}
-
-		[Command("github", RunMode = RunMode.Async)]
-		public async Task GitHubCommand(string input)
+		[Command("amazon", RunMode = RunMode.Async)]
+		public async Task AmazonCommandAsync([Remainder]string input)
 		{
 			ITextChannel textChannel = Context.Channel as ITextChannel;
 
-			await Github.StartGithub(textChannel, input);
+			AmazonScrapper amazonScrapper = new();
+
+			IUserMessage message = await ReplyAsync("***SEARCHING... :mag_right: :detective:***");
+
+			amazonScrapper.StartAmazon(textChannel, _client, input, message);
 		}
 
 		[Command("love", RunMode = RunMode.Async)]
-		public async Task Love([Remainder] string input)
+		public async Task LoveCommandAsync([Remainder] string input)
 		{
 			ITextChannel textChannel = Context.Channel as ITextChannel;
 			var mentionedUsers = Context.Message.MentionedUsers;
@@ -67,8 +47,37 @@ namespace DiscordBot
 			}
 		}
 
+		[Command("game", RunMode = RunMode.Async)]
+		public async Task GameWordsAsync()
+		{
+			ITextChannel textChannel = Context.Channel as ITextChannel;
+
+			GameWords gameWords = new();
+
+			if (textChannel != null)
+			{
+				gameWords.StartGameWords(textChannel, _client);
+			}
+		}
+
+		[Command("weather", RunMode = RunMode.Async)]
+		public async Task TimeCommandAsync(string locationName)
+		{
+			ITextChannel textChannel = Context.Channel as ITextChannel;
+
+			_weather.StartTime(textChannel, locationName);
+		}
+
+		[Command("level", RunMode = RunMode.Async)]
+		public async Task CheckLevelCommandAsync(/*laderboards*/)
+		{
+			IGuildUser user = Context.User as IGuildUser;
+
+			await ReplyAsync(embed: await Database.CheckLevel(user));
+		}
+
 		[Command("clear", RunMode = RunMode.Async)]
-		public async Task Clear(string input)
+		public async Task ClearAsync(string input)
 		{
 			IGuildUser user = Context.User as IGuildUser;
 
@@ -118,13 +127,10 @@ namespace DiscordBot
 		public async Task SkipAsync() => _player.Skip();
 
 		[Command("queque", RunMode = RunMode.Async)]
-		public async Task Queque() => _player.SeeQueque();
+		public async Task QuequeAsync() => _player.SeeQueque();
 
 		[Command("stop", RunMode = RunMode.Async)]
-		public async Task StopAsync()
-		{
-			_player.Stop();
-		}
+		public async Task StopAsync() => _player.Stop();
 
 		[Command("troll", RunMode = RunMode.Async)]
 		public async Task TrollAsync()

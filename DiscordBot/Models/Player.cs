@@ -162,19 +162,8 @@ namespace DiscordBot
 			}
 		}
 
-		//private async Task ErrorDis(SocketUser user, SocketVoiceState oldChannel, SocketVoiceState newChannel)
-		//{
-		//	await _textChannel.SendMessageAsync("movio");
-
-		//	if (user.Id == _client.CurrentUser.Id && oldChannel)
-		//	{
-
-		//	}
-		//}
-
 		private Process CreateStream() => Process.Start(new ProcessStartInfo
-		{//-loglevel panic
-		 //-ac 2 -f s16le -ar 48000 pipe:1
+		{
 			FileName = "ffmpeg",
 			Arguments = $"-hide_banner -i - -ac 2 -f s16le -ar 48000 pipe:",
 			UseShellExecute = false,
