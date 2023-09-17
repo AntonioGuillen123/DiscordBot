@@ -6,6 +6,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace DiscordBot.Models.DatabaseFolder
 {
@@ -21,6 +22,13 @@ namespace DiscordBot.Models.DatabaseFolder
 		{
 			LastXPAdd = xp;
 			EXP += xp;
+		}
+
+		public void RestXP(int xp)
+		{ 
+			int newXP = EXP - xp;
+
+			EXP = newXP >= 0 ? newXP : 0;
 		}
 
 		public static bool operator >=(DataXP xp1, DataXP xp2) => xp1.EXP >= xp2.EXP;

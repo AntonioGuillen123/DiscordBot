@@ -2,9 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordBot.Models;
-using DiscordBot.Models.Amazon;
 using DiscordBot.Models.DatabaseFolder;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
@@ -12,8 +10,8 @@ namespace DiscordBot
 {
 	public class Program
 	{
-		public const string PREFIX = "/";
-		//public const string PREFIX = "s!";
+		//public const string PREFIX = "/";
+		public const string PREFIX = "s!";
 
 		public static string token;
 		public static CommandService commandService;
@@ -34,13 +32,16 @@ namespace DiscordBot
 				GatewayIntents = GatewayIntents.All
 			});
 
-			client.Log += LogAsync;
+			client.Log += OnLogAsync;
 			client.MessageReceived += OnMessageReceivedAsync;
-			client.Ready += Database.InsertUsersAsync;
+			client.Ready += Database.OnInsertUsersAsync;
+			client.UserJoined += Database.OnNewUserGuild;
+			//client.UserLeft += Database.DeleteUserGuild;
 
 			IServiceCollection servicies = new ServiceCollection()
 				.AddSingleton(client)
-				.AddSingleton<Player>()
+				.AddSingleton<Dictionary<ulong, Player>>()
+				.AddSingleton(new Dictionary<ulong, Models.Games.Game>())
 				.AddSingleton<Weather>();
 
 			serviceProvider = servicies.BuildServiceProvider();
@@ -78,10 +79,14 @@ namespace DiscordBot
 						await commandContext.Channel.SendMessageAsync(error);
 					}
 				}
+				else if (message.MentionedUsers.Select(user => user.Id).Contains(client.CurrentUser.Id))
+				{
+					await message.Channel.SendMessageAsync("KLK");
+				}
 			}
 		}
 
-		private static Task LogAsync(LogMessage msg)
+		private static Task OnLogAsync(LogMessage msg)
 		{
 			Console.WriteLine(msg.ToString());
 			return Task.CompletedTask;

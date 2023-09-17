@@ -9,18 +9,28 @@ namespace DiscordBot.Models.DatabaseFolder
 {
 	public class MyDbContext : DbContext
 	{
-		private const string PATH = "spiderbot.db";
+		
+		public string PATH = "database.db";
+
+		private string _guild;
 
 		public string DbPath { get; private set; }
 
 		public DbSet<DataUser> Users { get; private set; }
 		public DbSet<DataXP> XP { get; private set; }
 
+		public MyDbContext(string guild)
+		{
+			_guild = guild;
+
+			PATH = $"{guild}{PATH}".Replace(" ", "");
+		}
+
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
-			string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+			var dataPath = $"DataSource={DatabaseFolder.Database.DATABASE_PATH}{_guild}/{PATH}".Replace(" ", "");
 
-			optionsBuilder.UseSqlite($"DataSource={baseDir}{PATH}");
+			optionsBuilder.UseSqlite(dataPath);
 		}
 	}
 }

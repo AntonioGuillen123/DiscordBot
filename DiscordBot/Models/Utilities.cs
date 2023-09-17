@@ -15,11 +15,6 @@ namespace DiscordBot.Models
 		private static EmbedBuilder ResetBuilder() => new EmbedBuilder()
 			.WithAuthor(_client.CurrentUser)
 			.WithColor(EMBED_COLOR)
-			.WithCurrentTimestamp()
-			.WithFooter(new EmbedFooterBuilder()
-			{
-				Text = _client.Guilds.FirstOrDefault().Name,
-				IconUrl = _client.Guilds.FirstOrDefault().IconUrl
-			});
+			.WithCurrentTimestamp();
 	}
 }

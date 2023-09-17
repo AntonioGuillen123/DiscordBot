@@ -46,7 +46,7 @@ namespace DiscordBot
 					foreach (IVideo video in await _youtube.Playlists.GetVideosAsync(query))
 						videos.Add(video);
 
-					text = "PLAYLIST WAS SUCCESSFULLY ADDED TO QUEUE :)";
+					text = "***PLAYLIST WAS SUCCESSFULLY ADDED TO QUEUE :)***";
 				}
 				else
 				{
@@ -54,7 +54,7 @@ namespace DiscordBot
 
 					videos.Add(isYT ? await _youtube.Videos.GetAsync(query) : await _youtube.Search.GetVideosAsync(query).FirstOrDefaultAsync());
 
-					text = "VIDEO WAS SUCCESSFULLY ADDED TO QUEUE :)";
+					text = "***VIDEO WAS SUCCESSFULLY ADDED TO QUEUE :)***";
 				}
 
 				videos.ForEach(_queque.Enqueue);
@@ -68,7 +68,7 @@ namespace DiscordBot
 			}
 			catch (Exception)
 			{
-				await _textChannel.SendMessageAsync("AN ERROR HAS OCCURRED WITH THE VIDEO :(");
+				await _textChannel.SendMessageAsync("***AN ERROR HAS OCCURRED WITH THE VIDEO :(***");
 			}
 		}
 
@@ -152,13 +152,13 @@ namespace DiscordBot
 		{
 			if (_playing && _queque.Count != 0)
 			{
-				await _textChannel.SendMessageAsync("SONG SKIPED SUCCESSFULLY");
+				await _textChannel.SendMessageAsync("***SONG SKIPED SUCCESSFULLY***");
 
 				_token?.Cancel();
 			}
 			else
 			{
-				await _textChannel.SendMessageAsync("NO SONGS IN THE QUEUE");
+				await _textChannel.SendMessageAsync("***NO SONGS IN THE QUEUE***");
 			}
 		}
 
@@ -219,7 +219,7 @@ namespace DiscordBot
 			string text = "";
 			int count = _queque.Count;
 
-			text = count == 0 ? "NO SONGS IN THE QUEUE" : $"THERE ARE {count} SONGS IN QUEUE";
+			text = count == 0 ? "***NO SONGS IN THE QUEUE***" : $"***THERE ARE {count} SONGS IN QUEUE***";
 
 			await _textChannel.SendMessageAsync(text);
 		}

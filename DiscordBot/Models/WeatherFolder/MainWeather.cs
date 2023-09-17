@@ -5,11 +5,11 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace DiscordBot.Models.Weather_Models
+namespace DiscordBot.Models.WeatherFolder
 {
-	public class WindWeather
+	public class MainWeather
 	{
-		[JsonPropertyName("speed")]
-		public double Speed { get; set; }
+		[JsonPropertyName("temp")]
+		public double Temp { get; set; }
 	}
 }

@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace DiscordBot.Models.Weather_Models
+namespace DiscordBot.Models.WeatherFolder
 {
 	public class LocationWeather
 	{

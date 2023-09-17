@@ -68,7 +68,7 @@ namespace DiscordBot.Models.Amazon
 			{
 				IconUrl = ICON_URL,
 				Text = "amazon.es"
-			}).Build();
+			});
 
 			return builder.Build();
 		}

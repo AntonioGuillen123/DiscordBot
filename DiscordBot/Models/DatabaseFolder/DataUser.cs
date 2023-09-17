@@ -1,5 +1,5 @@
 ﻿using Discord;
-using Discord.Rest;
+using Discord.WebSocket;
 
 namespace DiscordBot.Models.DatabaseFolder
 {
@@ -9,34 +9,41 @@ namespace DiscordBot.Models.DatabaseFolder
 		private DataXP _nextLevel;
 
 		public ulong Id { get; set; }
+		public ulong GuildId { get; set; }
 		public string Name { get; set; }
 		public bool IsBot { get; set; }
 		public DataXP CurrentLevel { get => _level; set => _level = value; }
 		public DataXP NextLevel { get => _nextLevel; set => _nextLevel = value; }
 
-		public async Task LevelUpAsync(ITextChannel textChannel) 
+		public async Task LevelUpAsync(ITextChannel textChannel)
 		{
-			if (CurrentLevel >= NextLevel)
+			bool levelUP = false;
+
+			while (CurrentLevel >= NextLevel)
 			{
+				levelUP = true;
+
 				int newXP = CurrentLevel.EXP - NextLevel.EXP;
 
 				NextLevel.Level++;
-				NextLevel.EXP += (int)(CurrentLevel.EXP * 0.25);
+				NextLevel.EXP += (int)(NextLevel.EXP * 1.5);
 
 				CurrentLevel.EXP = newXP;
 				CurrentLevel.Level++;
-
-				await SendLevelUpMessageAsync(textChannel);
 			}
+
+			if (levelUP)
+				await SendLevelUpMessageAsync(textChannel);
 		}
 
 		public async Task SendLevelUpMessageAsync(ITextChannel textChannel)
 		{
-			IUser user = await SearchUserAsync();
+			IGuildUser user = await SearchUserAsync();
 
 			await textChannel.SendMessageAsync($"Congratulations {user.Mention} YOU ARE LEVEL: {CurrentLevel.Level}");
 		}
 
-		public async Task<IUser> SearchUserAsync() => await Program.client.GetUserAsync(Id);
+		public IGuild SearchGuild() => Program.client.GetGuild(GuildId);
+		public async Task<IGuildUser> SearchUserAsync() => await SearchGuild().GetUserAsync(Id);
 	}
 }

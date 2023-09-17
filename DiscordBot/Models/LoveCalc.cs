@@ -7,9 +7,9 @@ namespace DiscordBot.Models
 {
     public static class LoveCalc
     {
-        //private const string CLIENT_ID = "04c3ba3f7f3eabf";
-
+        private static readonly string FILE_NAME = "lovephoto.png";
         private const int RESOLUTION = 512;
+
         private static List<IGuildUser> _users = new();
 
         public static async void StartLoveCalc(IEnumerable<SocketUser> mentionedUsers, ITextChannel textChannel)
@@ -29,18 +29,14 @@ namespace DiscordBot.Models
 
         private static async Task SendLoveCalcAsync(ITextChannel textChannel, int result)
         {
-            using Stream photo = await MakePhotoAsync(_users);
+            await MakePhotoAsync(_users);
 
-            await textChannel.SendMessageAsync($"***{_users[0].DisplayName}*** + ***{_users[1].DisplayName}*** = {result}% UWU");
+            await textChannel.SendFileAsync(FILE_NAME, embed: EmbedBuild(result));
 
-            await textChannel.SendFileAsync(photo, "image.png");
-
-            //await FetchAsync(photo);
-
-            //await textChannel.SendMessageAsync(embed: EmbedBuild(result));
+            File.Delete(FILE_NAME);
         }
 
-        private static async Task<Stream> MakePhotoAsync(List<IGuildUser> users)
+        private static async Task MakePhotoAsync(List<IGuildUser> users)
         {
             List<Stream> photos = await GetPhotosAsync(new()
             {
@@ -65,36 +61,23 @@ namespace DiscordBot.Models
 
             bitmap.Save(result, System.Drawing.Imaging.ImageFormat.Png);
 
-            return result;
+            using FileStream file = new FileStream(FILE_NAME, FileMode.Create);
+
+            result.Position = 0;
+            await result.CopyToAsync(file);
         }
 
-  //      private static async Task FetchAsync(Stream photo)
-  //      {
-		//	var client = new HttpClient();
-		//	var request = new HttpRequestMessage(HttpMethod.Post, "https://api.imgur.com/3/image");
-		//	request.Headers.Add("Authorization", $"Client-ID {CLIENT_ID}");
-		//	var content = new MultipartFormDataContent();
-		//	content.Add(new StreamContent(photo), "image", "image.png");
-		//	request.Content = content;
-		//	var response = await client.SendAsync(request);
-		//	response.EnsureSuccessStatusCode();
-		//	Console.WriteLine(await response.Content.ReadAsStringAsync());
+        private static Embed EmbedBuild(int result)
+        {
+            EmbedBuilder embed = Utilities.Builder;
 
-		//}
+            embed.WithTitle($"{result}% UWU");
+            embed.AddField("User 1", _users[0].DisplayName, true);
+            embed.AddField("User 2", _users[1].DisplayName, true);
+            embed.WithImageUrl($"attachment://{FILE_NAME}");
 
-
-		//private static Embed EmbedBuild(int result, Stream photo)
-  //      {
-  //          EmbedBuilder embed = Utilities.Builder;
-
-  //          embed.WithTitle($"{result}% UWU");
-  //          embed.AddField("User 1", _users[0].DisplayName, true);
-		//	embed.AddField("User 2", _users[1].DisplayName, true);
-
-
-
-		//	return embed.Build();
-  //      }
+            return embed.Build();
+        }
 
         private static async Task<List<Stream>> GetPhotosAsync(List<string> urls)
         {

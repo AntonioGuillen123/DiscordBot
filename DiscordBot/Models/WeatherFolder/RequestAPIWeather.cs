@@ -5,6 +5,6 @@ namespace DiscordBot.Models
 	public class RequestAPIWeather
 	{
 		[JsonPropertyName("list")]
-		public List<IntervalWeather> Intervals { get; set; }
+		public IList<IntervalWeather> Intervals { get; set; }
 	}
 }

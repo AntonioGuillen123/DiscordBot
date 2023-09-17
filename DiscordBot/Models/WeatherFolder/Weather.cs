@@ -1,5 +1,5 @@
 ﻿using Discord;
-using DiscordBot.Models.Weather_Models;
+using DiscordBot.Models.WeatherFolder;
 using System.Text;
 using System.Text.Json;
 
