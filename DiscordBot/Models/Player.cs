@@ -25,6 +25,8 @@ namespace DiscordBot
 
 		private bool _doQueque;
 		private bool _playing;
+		private bool _loop;
+		private IVideo _video;
 		private CancellationTokenSource _token;
 
 
@@ -80,8 +82,12 @@ namespace DiscordBot
 			{
 				if (!_playing)
 				{
+					if (!_loop)
+						_video = _queque.Dequeue();
+
+					Play(_video);
 					_playing = true;
-					Play(_queque.Dequeue());
+
 				}
 			} while (_doQueque && _queque.Count != 0);
 		}
@@ -223,6 +229,7 @@ namespace DiscordBot
 
 			await _textChannel.SendMessageAsync(text);
 		}
+
 		public async void Stop()
 		{
 			await _voiceChannel.DisconnectAsync();
@@ -240,5 +247,30 @@ namespace DiscordBot
 			_token?.Cancel();
 			_token = null;
 		}
+
+		public void PlayAleatory()
+		{
+			List<IVideo> queue = _queque.ToList();
+			Queue<IVideo> newQueue = new();
+
+			Random rnd = new();
+			int length = queue.Count;
+
+			for (int i = 0; i < length; i++)
+			{
+				int number = rnd.Next(0, length - i);
+
+				IVideo video = queue[number];
+
+				queue.Remove(video);
+
+				newQueue.Enqueue(video);
+			}
+
+			_queque = newQueue;
+		}
+
+		public void DoLoop() => _loop = true;
+		public void StopLoop() => _loop = false;
 	}
 }

@@ -24,6 +24,12 @@ namespace DiscordBot.Models
 			_weather = weather;
 		}
 
+		[Command("help", RunMode = RunMode.Async)]
+		public async Task Help()
+		{
+
+		}
+
 		[Command("emoji", RunMode = RunMode.Async)]
 		public async Task EmojisAsync()
 		{
@@ -136,7 +142,7 @@ namespace DiscordBot.Models
 			}
 		}
 
-		[Command("game", RunMode = RunMode.Async)]
+		[Command("wordgame", RunMode = RunMode.Async)]
 		public async Task GameWordsAsync()
 		{
 			ITextChannel textChannel = Context.Channel as ITextChannel;
@@ -188,11 +194,15 @@ namespace DiscordBot.Models
 
 				await ReplyAsync(embed: await Database.CheckLevel(user));
 			}
-			else
+			else if(all == "all")
 			{
 				IGuild guild = Context.Guild as IGuild;
 
 				await ReplyAsync(embed: await Database.CheckLaderBoardsAsync(guild));
+			}
+			else
+			{
+				await ReplyAsync("***THIS COMMAND DOES NOT EXIST :(***");
 			}
 		}
 
@@ -267,7 +277,15 @@ namespace DiscordBot.Models
 		[Command("queque", RunMode = RunMode.Async)]
 		public async Task QuequeAsync() => GetGuildPlayer().SeeQueque();
 
+		[Command("playaleatory", RunMode = RunMode.Async)]
+		public async Task PlayAleatoryAsync() => GetGuildPlayer().PlayAleatory();
+
 		[Command("stop", RunMode = RunMode.Async)]
 		public async Task StopAsync() => GetGuildPlayer().Stop();
+		[Command("loop", RunMode = RunMode.Async)]
+		public async Task DoLoopAsync() => GetGuildPlayer().DoLoop();
+
+		[Command("stoploop", RunMode = RunMode.Async)]
+		public async Task StopLoopAsync() => GetGuildPlayer().StopLoop();
 	}
 }

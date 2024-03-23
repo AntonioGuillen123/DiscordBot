@@ -106,7 +106,9 @@ namespace DiscordBot.Models.DatabaseFolder
 
 				using MyDbContext context = new(guild.Guild.Name);
 
-				var user = context.Users.Include(user => user.CurrentLevel).Include(user => user.NextLevel).FirstOrDefault(user => user.Id == message.Author.Id);
+				var user = context.Users.Include(user => user.CurrentLevel)
+					.Include(user => user.NextLevel)
+					.FirstOrDefault(user => user.Id == message.Author.Id);
 
 				Random random = new Random();
 
